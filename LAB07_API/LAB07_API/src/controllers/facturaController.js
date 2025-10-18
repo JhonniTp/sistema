@@ -58,7 +58,6 @@ class FacturaController {
             
             FacturaService.update(id, facturaDataToUpdate, (err, results) => {
                 if (err) {
-                    // Aunque falló la BD, el registro en blockchain fue exitoso. Informar al usuario.
                     console.error("Error actualizando la BD local tras registro en BC:", err);
                     return res.status(500).json({ 
                         error: `Error al actualizar la base de datos local, pero la factura SÍ FUE REGISTRADA en blockchain. TxHash: ${receipt.transactionHash}` 
@@ -79,16 +78,27 @@ class FacturaController {
     static async getFacturaBlockchain(req, res) {
         const { id, account } = req.params;
         try {
+            console.log(`[Controller] Buscando en BC la factura ${id} con la cuenta ${account}`); // Log para depurar
             const factura = await FacturaBlockchainService.getFactura(id, account);
+            
+            // Verificamos si la respuesta es válida antes de enviarla
             if (!factura || factura.id == 0) {
-                return res.status(404).json({ error: 'Factura no encontrada en la blockchain' });
+                // Este caso ocurre si el contrato devuelve valores vacíos pero no un error.
+                return res.status(404).json({ error: `La factura con ID ${id} no fue encontrada en la blockchain.` });
             }
+            
+            console.log(`[Controller] Factura encontrada en BC:`, factura); // Log para depurar
             res.json({ success: true, data: factura, message: 'Factura obtenida de la blockchain exitosamente' });
+
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: error.message });
+            // Capturamos el error específico del servicio de blockchain y lo enviamos al frontend.
+            console.error("[Controller] Error al obtener factura de BC:", error.message);
+            
+            // Devolvemos un error 500 pero con el mensaje de error real para que el frontend lo pueda mostrar.
+            res.status(500).json({ error: `Error en el servidor al consultar la blockchain: ${error.message}` });
         }
     }
 }
 
 module.exports = FacturaController;
+

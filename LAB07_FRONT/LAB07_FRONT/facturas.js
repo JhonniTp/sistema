@@ -82,11 +82,30 @@ async function registrarBlockChain(id) {
             monto: factura.monto,
             account: account
         };
-
-        await axios.post("http://localhost:3000/api/facturas/blockchain", datosParaBlockchain);
         
+        console.log("Enviando estos datos para registrar:", datosParaBlockchain);
+
+        // 1. Capturamos la respuesta del servidor
+        const registroResponse = await axios.post("http://localhost:3000/api/facturas/blockchain", datosParaBlockchain);
+        
+        // 2. Obtenemos el ID de la transacción (Hash) desde la respuesta
+        const transactionHash = registroResponse.data.data.transactionHash;
+
         Swal.close();
-        Swal.fire('Éxito', 'Factura registrada en blockchain correctamente.', 'success');
+        
+        console.log("Registro exitoso. TxHash:", transactionHash); // <-- NUEVO LOG
+
+        // 3. Mostramos un mensaje de éxito mucho más detallado
+        Swal.fire({
+            icon: 'success',
+            title: '¡Registro Exitoso en Blockchain!',
+            html: `La factura fue registrada correctamente.<br><br>
+                   <div style="text-align:left; font-family: monospace; word-break: break-all;">
+                       <b>ID de Transacción (TxHash):</b><br> 
+                       ${transactionHash}
+                   </div>`,
+            footer: 'Este ID es la prueba inmutable de tu registro.'
+        });
         
         buscarFacturas(); 
 
@@ -123,11 +142,17 @@ async function validarBlockChain(id) {
     try {
         Swal.fire({ title: 'Validando factura en blockchain...', didOpen: () => { Swal.showLoading() } });
         
+        console.log(`Validando factura con ID: ${id} usando la cuenta: ${account}`); // <-- NUEVO LOG
+        
         const localResponse = await axios.get(`http://localhost:3000/api/facturas/${id}`);
         const facturaLocal = localResponse.data.data;
+        
+        console.log("Datos de la factura en la BD local:", facturaLocal); // <-- NUEVO LOG
 
         const blockchainResponse = await axios.get(`http://localhost:3000/api/facturas/blockchain/${id}/${account}`);
         const facturaBlockchain = blockchainResponse.data.data;
+        
+        console.log("Datos recibidos desde la Blockchain:", facturaBlockchain); // <-- NUEVO LOG
 
         Swal.close();
 
@@ -158,4 +183,3 @@ async function validarBlockChain(id) {
         Swal.fire('Error', mensajeError, 'error');
     }
 }
-
