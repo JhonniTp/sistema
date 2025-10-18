@@ -82,6 +82,6 @@ const contractABI = [
 		"type": "function"
 	}
 ]
-const contractAddress = '0x898e2688472E638Da8Fa1ac8a832c31C557b39E3';
+const contractAddress = '0x064C598222aEba98CFbDB975F082886B923C1071';
 
 module.exports = { contractABI, contractAddress };
