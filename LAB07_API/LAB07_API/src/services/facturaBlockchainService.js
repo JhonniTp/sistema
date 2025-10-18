@@ -1,78 +1,57 @@
 const Web3 = require('web3');
-const { contractABI, contracAddress } = require("./facturaBlockchainContract");
+const { contractABI, contractAddress } = require("./facturaBlockchainContract");
 
 const web3 = new Web3("http://127.0.0.1:7545");
 
 class FacturaBlockchainService {
 
-    static async createFactura(id, cliente, monto, estado, userAccount) {
+    static async createFactura(id, nombre_propietario, nombre_mascota, tratamiento, monto, estado, userAccount) {
         try {
-            console.log("\n--------------------------------------------------------");
             console.log("-- FacturaBlockchainService.createFactura --");
-            console.log("Creando factura en la blockchain...");
-            console.log("Parametros recibidos");
-            console.log("id:", id, "tipo:", typeof id);
-            console.log("cliente:", cliente, "tipo:", typeof cliente);
-            console.log("monto:", monto, "tipo:", typeof monto);
-            console.log("estado:", estado, "tipo:", typeof estado);
-            console.log("userAccount:", userAccount, "tipo:", typeof userAccount);
-
             const idNumber = Number(id);
             const montoNumber = Number(monto);
+            
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-            const contract = await new web3.eth.Contract(contractABI, contracAddress);
+            const receipt = await contract.methods.createFactura(
+                idNumber, 
+                nombre_propietario, 
+                nombre_mascota,
+                tratamiento,
+                montoNumber, 
+                estado
+            ).send({ from: userAccount, gas: 3000000 });
 
-            const receipt = await contract.methods.createFactura(idNumber, cliente, montoNumber, estado)
-                .send({ from: userAccount, gas: 3000000 });
-
-            console.log("Factura creada en la blockchain. Receipt:", receipt);
+            console.log("Factura creada en la blockchain. Receipt:", receipt.transactionHash);
             return receipt;
-
         } catch (error) {
-            console.log(error);
-            throw new Error("Error:" + error.data.reason);
+            console.error("Error en createFactura BC Service:", error);
+            const reason = error.message || "Error desconocido en la transacción.";
+            throw new Error("Error en BC: " + reason);
         }
     }
 
     static async getFactura(id, userAccount) {
         try {
-            console.log("\n--------------------------------------------------------");
             console.log("-- FacturaBlockchainService.getFactura --");
-            console.log("id:", id, "tipo:", typeof id);
-            console.log("userAccount:", userAccount, "tipo:", typeof userAccount);
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
+            const factura = await contract.methods.getFactura(Number(id)).call({ from: userAccount });
 
-            // Verificar si el contrato esta desplegado
-            const contratoExiste = await web3.eth.getCode(contracAddress);
-            if (contratoExiste === '0x') {
-                throw new Error("El contrato no está desplegado en la red.");
-            }
+            return {
+                id: factura['0'],
+                nombre_propietario: factura['1'],
+                nombre_mascota: factura['2'],
+                tratamiento: factura['3'],
+                monto: factura['4'],
+                estado: factura['5']
+            };
 
-            // Verificar si la factura existe en la blockchain
-            const contract = await new web3.eth.Contract(contractABI, contracAddress);
-            const factura = await contract.methods.getFactura(Number(id)).call({ from: userAccount, gas: 2000000 });
-
-            if (Array.isArray(factura)) {
-                return {
-                    id: factura[0],
-                    cliente: factura[1],
-                    monto: factura[2],
-                    estado: factura[3]
-                };
-            } else {
-                return {
-                    id: factura['0'],
-                    cliente: factura['1'],
-                    monto: factura['2'],
-                    estado: factura['3']
-                }
-            }
         } catch (error) {
-            console.log(error);
-            throw new Error("Error:" + error.data.reason);
+            console.error("Error en getFactura BC Service:", error);
+            const reason = error.message || "La factura podría no existir o hubo un error en la red.";
+            throw new Error("Error al consultar la blockchain: " + reason);
         }
     }
-
-
 }
 
 module.exports = FacturaBlockchainService;

@@ -8,7 +8,17 @@ const contractABI = [
 			},
 			{
 				"internalType": "string",
-				"name": "_cliente",
+				"name": "_nombre_propietario",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_nombre_mascota",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_tratamiento",
 				"type": "string"
 			},
 			{
@@ -48,6 +58,16 @@ const contractABI = [
 				"type": "string"
 			},
 			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
@@ -61,8 +81,7 @@ const contractABI = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-];
+]
+const contractAddress = '0x898e2688472E638Da8Fa1ac8a832c31C557b39E3';
 
-const contracAddress = '0x56122637A183Ba01E3dB4e6EDe9aD119539f01fd';
-
-module.exports = { contractABI, contracAddress };
+module.exports = { contractABI, contractAddress };
